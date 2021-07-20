@@ -1,14 +1,15 @@
 import setuptools
+from subprocess import check_call
 
 #draw detection tool
 
 install_requires = \
     [
-        'opencv-python',
         'pillow',
         'numpy'
     ]
 
+check_call("conda install -y --file requirements.txt".split())
 setuptools.setup(
     name="ddt",
     version="0.0.1",
