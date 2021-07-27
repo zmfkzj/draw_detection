@@ -1,20 +1,31 @@
+from os import PathLike
 from typing import Sequence, List
 from PIL import Image, ImageDraw, ImageFont
 from pathlib import Path
 from math import cos, sin, atan
 from copy import deepcopy
+from collections import defaultdict
+from random import randint
 
 import numpy as np
 import cv2
 
 
 class DdtImage:
-    def __init__(self,image:np.ndarray, label_color:dict) -> None:
-        #저장된 값이 BGR이라 가정
-        self.label_color = label_color
+    def __init__(self,image:np.ndarray, labelmap:PathLike=None) -> None:
+        '''
+        image: BGR(A) 이미지
+        labelmap: VOC format의 labelmap 파일 경로
+        미입력 시 랜덤으로 설정
+        '''
         self.image = image
-        self.fontscale = np.max(self.image.shape[:2]*0.02)
-        self.thick = int(np.max([*list(self.image.shape[:2]*0.002),1]))
+        if not labelmap:
+            self.label_color = defaultdict(lambda:(randint(0,255),randint(0,255),randint(0,255)) if self.image.shape[2]==3 else (randint(0,255),randint(0,255),randint(0,255))+(255,))
+        else:
+            self.label_color = self.parse_labelmap(labelmap_path=labelmap)
+        self.label_color['background'] = (0,0,0) if self.image.shape[2]==3 else (0,0,0,255)
+        self.fontscale = np.max(np.array(self.image.shape[:2])*0.02)
+        self.thick = int(np.max([*list(np.array(self.image.shape[:2])*0.002),1]))
         fontpath = Path(__file__).parent/'NanumGothicBold.ttf'
         self.font =ImageFont.truetype(str(fontpath), int(self.fontscale))
 
@@ -38,14 +49,23 @@ class DdtImage:
             return color[::-1] if channel==3 else color[::-1]+(255,)
         else:
             raise AssertionError(f'order 인수를 바르게 입력하세요. 현재 입력={order}')
+    
+    @staticmethod
+    def parse_labelmap(labelmap_path):
+        with open(labelmap_path, 'r') as f:
+            raw = f.readlines()
+        label_str_color = [ cat.split(':')[:2] for cat in raw[1:] ]
+        label_color = {label:[int(c) for c in color.split(',')] for label,color in label_str_color}
+        return label_color
 
     def drawBbox(self,label, bbox:Sequence, lineStyle='solid', fill=True, tag=False):
         assert lineStyle in ['solid','dot','no'],'"lineStyle" 인수는 "solid"와 "dot","no" 중 하나여야 합니다.'
+        bbox = [int(i) for i in bbox]
         color = self.getColor(label)
         self._rectangle((bbox[0], bbox[1]), (bbox[2], bbox[3]), color, self.thick, linestyle=lineStyle)
         if fill:
             self.fill(lambda :self._rectangle((bbox[0], bbox[1]), (bbox[2], bbox[3]), color, -1, linestyle=lineStyle))
-        if tag:
+        if tag&(label!='background'):
             self.drawLabel(label,bbox)
         return self
 
@@ -55,11 +75,12 @@ class DdtImage:
         elif linestyle=='dot': #dot
             points = [(topleft[0],topleft[1]),(topleft[0],bottomright[1]),(bottomright[0],bottomright[1]),(bottomright[0],topleft[1])]
             points = [np.array(point) for point in (points + [points[0]])]
-            self._dotlines(self.image, points,color)
+            self._dotlines(points,color)
         elif linestyle=='no' :
             pass
         else:
             Exception('Check out the outline.')
+        return self.image
         
     def _get_polar(self, vector):
         return np.array([self._get_length(vector),self._get_angle(vector)])
@@ -123,11 +144,13 @@ class DdtImage:
         img = Image.fromarray(self.return_order_changed_image(self.image))
         draw = ImageDraw.Draw(img)
         _,h = draw.textsize('q', font=self.font)
-        text_h = 2
+        text_start_point = 2
         for label, color in self.label_color.items():
-            draw.text((self.img.shape[1]-2, text_h), label, font = self.font, fill=color[::-1] , 
+            if label=='background':
+                continue
+            draw.text((self.image.shape[1]-2, text_start_point), label, font = self.font, fill=tuple(color[::-1]) , 
                         stroke_width=np.max([int(self.thick*0.3),1]), stroke_fill='white', anchor='rt')
-            text_h+=h
+            text_start_point+=h
         self.image = self.return_order_changed_image(np.array(img))
 
     def drawSeg(self, label, polygons, lineStyle, fill=True):
@@ -148,6 +171,31 @@ class DdtImage:
         return self
 
     def fill(self, func):
-        fill_img = np.copy(self.image)
-        fill_img = func()
-        self.image = np.mean([self.image,self.image,fill_img],axis=0).astype(np.uint8)
+        nofill_img = np.copy(self.image)
+        func()
+        self.image = np.mean([self.image]+[nofill_img]*3,axis=0).astype(np.uint8)
+
+    def save(self, path:PathLike):
+        path = Path(str(path))
+        path.parent.mkdir(parents=True, exist_ok=True)
+        cv2.imwrite(str(path),self.image)
+
+    def draw_sign(self,contents:str, position:int=0, linestyle='solid', fillstyle=True):
+        '''
+        contents: sign 안에 들어갈 문자
+        position: 순서(위치), 0부터 시작
+        '''
+        img = Image.fromarray(self.return_order_changed_image(self.image))
+        draw = ImageDraw.Draw(img)
+        _,h = draw.textsize('q', font=self.font)
+        width = int(3*h/2)
+
+        self.image = self.return_order_changed_image(np.array(img))
+        self.drawBbox('background',[2,2+(h+self.thick*2)*position,2+width,2+(h+self.thick*2)*(position+1)],linestyle,fillstyle,False)
+
+        img = Image.fromarray(self.return_order_changed_image(self.image))
+        draw = ImageDraw.Draw(img)
+
+        draw.text((2+int(width/2), 2+(h+self.thick*2)*position), contents, font = self.font, fill=(255,255,255) , 
+                    stroke_width=np.max([int(self.thick*0.3),1]), stroke_fill='white', anchor='ma')
+        self.image = self.return_order_changed_image(np.array(img))
