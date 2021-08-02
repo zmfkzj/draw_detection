@@ -5,11 +5,12 @@ from pathlib import Path
 from math import cos, sin, atan
 from copy import deepcopy
 from collections import defaultdict
-from random import randint
+from random import randint, seed
 
 import numpy as np
 import cv2
 
+seed(3)
 
 class DdtImage:
     def __init__(self,image:np.ndarray, labelmap:PathLike=None) -> None:
@@ -24,8 +25,8 @@ class DdtImage:
         else:
             self.label_color = self.parse_labelmap(labelmap_path=labelmap)
         self.label_color['background'] = (0,0,0) if self.image.shape[2]==3 else (0,0,0,255)
-        self.fontscale = np.max(np.array(self.image.shape[:2])*0.02)
-        self.thick = int(np.max([*list(np.array(self.image.shape[:2])*0.002),1]))
+        self.fontscale = np.max(np.array(self.image.shape[:2])*0.01)
+        self.thick = int(np.max([*list(np.array(self.image.shape[:2])*0.001),1]))
         fontpath = Path(__file__).parent/'NanumGothicBold.ttf'
         self.font =ImageFont.truetype(str(fontpath), int(self.fontscale))
 
@@ -173,10 +174,11 @@ class DdtImage:
     def fill(self, func):
         nofill_img = np.copy(self.image)
         func()
-        self.image = np.mean([self.image]+[nofill_img]*3,axis=0).astype(np.uint8)
+        self.image = np.mean([self.image]+[nofill_img]*2,axis=0).astype(np.uint8)
 
     def save(self, path:PathLike):
-        path = Path(str(path))
+        path = Path(str(path)).absolute()
+        print(path)
         path.parent.mkdir(parents=True, exist_ok=True)
         cv2.imwrite(str(path),self.image)
 
