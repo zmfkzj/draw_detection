@@ -12,7 +12,7 @@ install_requires = \
 check_call("conda install -y --file requirements.txt".split())
 setuptools.setup(
     name="ddt",
-    version="0.0.3",
+    version="0.0.4",
     author="zmfkzj",
     author_email="qlwlal@naver.com",
     description="이미지에 detection 결과를 그리기 위한 모듈",
