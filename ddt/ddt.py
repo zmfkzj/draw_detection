@@ -180,7 +180,11 @@ class DdtImage:
         path = Path(str(path)).absolute()
         print(path)
         path.parent.mkdir(parents=True, exist_ok=True)
-        cv2.imwrite(str(path),self.image)
+        result, encoded_img = cv2.imencode(path.suffix,self.image)
+        if result:
+            with open(str(path), mode='w+b') as f:
+                encoded_img.tofile(f)
+
 
     def draw_sign(self,contents:str, position:int=0, linestyle='solid', fillstyle=True):
         '''
