@@ -154,7 +154,7 @@ class DdtImage:
             text_start_point+=h
         self.image = self.return_order_changed_image(np.array(img))
 
-    def drawSeg(self, label, polygons, lineStyle, fill=True):
+    def drawSeg(self, label, polygons, lineStyle, fill=True, mask=None):
         color = self.getColor(label, 'BGR')
         polygons = [int(i) for i in polygons + polygons[:2]]
         polygons = [ np.array((polygons[idx],polygons[idx+1])) for idx in range(len(polygons))[::2] ]
@@ -168,7 +168,11 @@ class DdtImage:
             Exception('Check out the outline.')
 
         if fill:
-            self.fill(lambda :cv2.fillPoly(self.image,pts=[np.array(polygons[:-1])],color=color))
+            if mask is None:
+                self.fill(lambda :cv2.fillPoly(self.image,pts=[np.array(polygons[:-1])],color=color))
+            else:
+                color_mask = np.array(color).reshape([1,1,len(color)])*np.ones(self.image.shape[:2])
+                self.fill(lambda : cv2.add(self.image,color_mask,mask=mask))
         return self
 
     def fill(self, func):
