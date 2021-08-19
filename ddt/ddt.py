@@ -56,7 +56,7 @@ class DdtImage:
         with open(labelmap_path, 'r') as f:
             raw = f.readlines()
         label_str_color = [ cat.split(':')[:2] for cat in raw[1:] ]
-        label_color = {label:[int(c) for c in color.split(',')] for label,color in label_str_color}
+        label_color = {label:[int(c) for c in color.split(',')][::-1] for label,color in label_str_color}
         return label_color
 
     def drawBbox(self,label, bbox:Sequence, lineStyle='solid', fill=True, tag=False):
@@ -171,8 +171,8 @@ class DdtImage:
             if mask is None:
                 self.fill(lambda :cv2.fillPoly(self.image,pts=[np.array(polygons[:-1])],color=color))
             else:
-                color_mask = np.array(color).reshape([1,1,len(color)])*np.ones(self.image.shape[:2])
-                self.fill(lambda : cv2.add(self.image,color_mask,mask=mask))
+                color_mask = np.array(color).reshape([1,1,len(color)])*np.ones_like(self.image)
+                self.fill(lambda : np.where(np.transpose(np.tile(mask,(3,1,1)),(1,2,0)),color_mask,self.image))
         return self
 
     def fill(self, func):
