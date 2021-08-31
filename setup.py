@@ -6,7 +6,8 @@ from subprocess import check_call
 install_requires = \
     [
         'pillow',
-        'numpy'
+        'numpy',
+        'chardet'
     ]
 
 check_call("conda install -y --file requirements.txt".split())

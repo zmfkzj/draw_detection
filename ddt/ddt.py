@@ -7,10 +7,12 @@ from copy import deepcopy
 from collections import defaultdict
 from random import randint, seed
 
+import chardet
 import numpy as np
 import cv2
 
 seed(3)
+Image.MAX_IMAGE_PIXELS = None
 
 class DdtImage:
     def __init__(self,image:np.ndarray, labelmap:PathLike=None) -> None:
@@ -53,7 +55,10 @@ class DdtImage:
     
     @staticmethod
     def parse_labelmap(labelmap_path):
-        with open(labelmap_path, 'r') as f:
+        with open(labelmap_path, 'r+b') as f:
+            raw = f.read()
+        encoding = chardet.detect(raw)['encoding']
+        with open(labelmap_path, 'r', encoding=encoding) as f:
             raw = f.readlines()
         label_str_color = [ cat.split(':')[:2] for cat in raw[1:] ]
         label_color = {label:[int(c) for c in color.split(',')][::-1] for label,color in label_str_color}
@@ -178,7 +183,7 @@ class DdtImage:
     def fill(self, func):
         nofill_img = np.copy(self.image)
         func()
-        self.image = np.mean([self.image]+[nofill_img]*2,axis=0).astype(np.uint8)
+        self.image = (self.image*0.3+nofill_img*0.7).astype(np.uint8)
 
     def save(self, path:PathLike):
         path = Path(str(path)).absolute()
