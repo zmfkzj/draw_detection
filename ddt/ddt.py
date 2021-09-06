@@ -183,7 +183,7 @@ class DdtImage:
     def fill(self, func):
         nofill_img = np.copy(self.image)
         func()
-        self.image = (self.image*0.3+nofill_img*0.7).astype(np.uint8)
+        self.image = cv2.addWeighted(self.image, 0.3, nofill_img,0.7,)
 
     def save(self, path:PathLike):
         path = Path(str(path)).absolute()
