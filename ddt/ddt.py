@@ -133,7 +133,7 @@ class DdtImage:
         cv2.polylines(self.image, dot_points, False, color, self.thick)
 
     def drawLabel(self, label, bbox):
-        color_rgb = self.getColor(label,order='RGB')
+        color_rgb = tuple(self.getColor(label,order='RGB'))
         textColor = tuple(np.array([255,255,255]) - np.array(color_rgb))
         #draw tag
         tag_background = Image.new('RGB', (int(self.fontscale*100),int(self.fontscale*1.5)),color=color_rgb)
@@ -183,7 +183,7 @@ class DdtImage:
     def fill(self, func):
         nofill_img = np.copy(self.image)
         func()
-        self.image = cv2.addWeighted(self.image, 0.3, nofill_img,0.7,)
+        self.image = cv2.addWeighted(self.image, 0.3, nofill_img,0.7,0)
 
     def save(self, path:PathLike):
         path = Path(str(path)).absolute()
