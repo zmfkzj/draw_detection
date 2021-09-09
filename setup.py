@@ -16,7 +16,7 @@ root = Path(__file__).parent
 check_call("conda install -y --file".split()+[str(root/"requirements.txt")])
 setuptools.setup(
     name="ddt",
-    version="0.0.8",
+    version="0.0.9",
     author="zmfkzj",
     author_email="qlwlal@naver.com",
     description="이미지에 detection 결과를 그리기 위한 모듈",
