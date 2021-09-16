@@ -33,13 +33,16 @@ class DdtImage:
         self.font =ImageFont.truetype(str(fontpath), int(self.fontscale))
 
     @staticmethod
-    def return_order_changed_image(image):
+    def return_order_changed_image(image:np.ndarray):
         '''
         RGB(A) to BGR(A), BGR(A) to RGB(A)
         '''
-        img = deepcopy(image)
-        if len(img.shape) == 3 and img.shape[2] in {3, 4}:
-            img[:, :, :3] = img[:, :, 2::-1]
+        img = image.copy()
+        if len(img.shape) == 3:
+            if img.shape[2]==3:
+                cv2.cvtColor(img,cv2.COLOR_RGB2BGR)
+            if img.shape[2]==4:
+                cv2.cvtColor(img,cv2.COLOR_RGBA2BGRA)
         return img
 
     def getColor(self,label, order='BGR')->np.ndarray:
