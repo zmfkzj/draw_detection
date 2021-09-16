@@ -64,7 +64,7 @@ class DdtImage:
         with open(labelmap_path, 'r', encoding=encoding) as f:
             raw = f.readlines()
         label_str_color = [ cat.split(':')[:2] for cat in raw[1:] ]
-        label_color = {label:[int(c) for c in color.split(',')][::-1] for label,color in label_str_color}
+        label_color = {label:tuple([int(c) for c in color.split(',')][::-1]) for label,color in label_str_color}
         return label_color
 
     def drawBbox(self,label, bbox:Sequence, lineStyle='solid', fill=True, tag=False):
