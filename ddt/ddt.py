@@ -37,7 +37,7 @@ class DdtImage:
         '''
         RGB(A) to BGR(A), BGR(A) to RGB(A)
         '''
-        img = image.copy()
+        img = image.astype(np.uint8).copy()
         if len(img.shape) == 3:
             if img.shape[2]==3:
                 cv2.cvtColor(img,cv2.COLOR_RGB2BGR)
@@ -136,11 +136,11 @@ class DdtImage:
         cv2.polylines(self.image, dot_points, False, color, self.thick)
 
     def drawLabel(self, label, bbox):
-        color_rgb = self.getColor(label,order='RGB')
+        color_rgb = self.getColor(label,order='BGR')
         textColor = tuple(np.ones_like(color_rgb)*255 - color_rgb)
         color_rgb = tuple(color_rgb)
         #draw tag
-        tag_background = Image.new('RGB', (int(self.fontscale*100),int(self.fontscale*1.5)),color=color_rgb)
+        tag_background = Image.new('BGR', (int(self.fontscale*100),int(self.fontscale*1.5)),color=color_rgb)
         draw = ImageDraw.Draw(tag_background)
         draw.text((0, 0), label, font = self.font, fill = textColor,anchor='lt')
         w, h = draw.textsize(label, font=self.font)
