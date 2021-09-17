@@ -140,7 +140,7 @@ class DdtImage:
         textColor = tuple(np.ones_like(color_rgb)*255 - color_rgb)
         color_rgb = tuple(color_rgb)
         #draw tag
-        tag_background = Image.new('BGR', (int(self.fontscale*100),int(self.fontscale*1.5)),color=color_rgb)
+        tag_background = Image.new('RGB', (int(self.fontscale*100),int(self.fontscale*1.5)),color=color_rgb)
         draw = ImageDraw.Draw(tag_background)
         draw.text((0, 0), label, font = self.font, fill = textColor,anchor='lt')
         w, h = draw.textsize(label, font=self.font)
