@@ -136,8 +136,9 @@ class DdtImage:
         cv2.polylines(self.image, dot_points, False, color, self.thick)
 
     def drawLabel(self, label, bbox):
-        color_rgb = tuple(self.getColor(label,order='RGB'))
-        textColor = tuple(np.array([255,255,255]) - np.array(color_rgb))
+        color_rgb = self.getColor(label,order='RGB')
+        textColor = tuple(np.ones_like(color_rgb)*255 - color_rgb)
+        color_rgb = tuple(color_rgb)
         #draw tag
         tag_background = Image.new('RGB', (int(self.fontscale*100),int(self.fontscale*1.5)),color=color_rgb)
         draw = ImageDraw.Draw(tag_background)
