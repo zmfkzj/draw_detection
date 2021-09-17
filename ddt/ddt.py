@@ -148,7 +148,7 @@ class DdtImage:
         text_y = max(bbox[1] - h,0) #label 위치 조정
         img = Image.fromarray(self.return_order_changed_image(self.image))
         img.paste(tag_background,(bbox[0],text_y))
-        self.image = self.return_order_changed_image(np.array(img))
+        self.image = self.return_order_changed_image(np.array(img,dtype=np.uint8))
     
     def drawLegend(self):
         img = Image.fromarray(self.return_order_changed_image(self.image))
@@ -161,7 +161,7 @@ class DdtImage:
             draw.text((self.image.shape[1]-2, text_start_point), label, font = self.font, fill=tuple(color[::-1]) , 
                         stroke_width=np.max([int(self.thick*0.3),1]), stroke_fill='white', anchor='rt')
             text_start_point+=h
-        self.image = self.return_order_changed_image(np.array(img))
+        self.image = self.return_order_changed_image(np.array(img, dtype=np.uint8))
 
     def drawSeg(self, label, polygons, lineStyle, fill=True, mask=None):
         color = self.getColor(label, 'BGR')
@@ -180,7 +180,7 @@ class DdtImage:
             if mask is None:
                 self.fill(lambda :cv2.fillPoly(self.image,pts=[np.array(polygons[:-1])],color=color))
             else:
-                color_mask = np.array(color).reshape([1,1,len(color)])*np.ones_like(self.image)
+                color_mask = np.array(color).reshape([1,1,len(color)])*np.ones_like(self.image,dtype=np.uint8)
                 self.fill(lambda : np.where(np.transpose(np.tile(mask,(3,1,1)),(1,2,0)),color_mask,self.image))
         return self
 
@@ -209,7 +209,7 @@ class DdtImage:
         _,h = draw.textsize('q', font=self.font)
         width = int(3*h/2)
 
-        self.image = self.return_order_changed_image(np.array(img))
+        self.image = self.return_order_changed_image(np.array(img,dtype=np.uint8))
         self.drawBbox('background',[2,2+(h+self.thick*2)*position,2+width,2+(h+self.thick*2)*(position+1)],linestyle,fillstyle,False)
 
         img = Image.fromarray(self.return_order_changed_image(self.image))
@@ -217,4 +217,4 @@ class DdtImage:
 
         draw.text((2+int(width/2), 2+(h+self.thick*2)*position), contents, font = self.font, fill=(255,255,255) , 
                     stroke_width=np.max([int(self.thick*0.3),1]), stroke_fill='white', anchor='ma')
-        self.image = self.return_order_changed_image(np.array(img))
+        self.image = self.return_order_changed_image(np.array(img,dtype=np.uint8))
