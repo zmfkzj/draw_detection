@@ -27,7 +27,7 @@ class DdtImage:
         else:
             self.label_color = self.parse_labelmap(labelmap_path=labelmap)
         self.label_color['background'] = (0,0,0) if self.image.shape[2]==3 else (0,0,0,255)
-        self.fontscale = np.max(np.array(self.image.shape[:2])*0.01)
+        self.fontscale = np.max(np.array(self.image.shape[:2])*0.005)
         self.thick = int(np.max([*list(np.array(self.image.shape[:2])*0.001),1]))
         fontpath = Path(__file__).parent/'NanumGothicBold.ttf'
         self.font =ImageFont.truetype(str(fontpath), int(self.fontscale))
@@ -67,7 +67,7 @@ class DdtImage:
         label_color = {label:tuple([int(c) for c in color.split(',')][::-1]) for label,color in label_str_color}
         return label_color
 
-    def drawBbox(self,label, bbox:Sequence, lineStyle='solid', fill=True, tag=False, preffix:str=None, suffix:str=None):
+    def drawBbox(self,label, bbox:Sequence, lineStyle='solid', fill=True, tag=False, preffix:str='', suffix:str=''):
         assert lineStyle in ['solid','dot','no'],'"lineStyle" 인수는 "solid"와 "dot","no" 중 하나여야 합니다.'
         bbox = [int(i) for i in bbox]
         color = self.getColor(label)
@@ -75,8 +75,7 @@ class DdtImage:
         if fill:
             self.fill(lambda :self._rectangle((bbox[0], bbox[1]), (bbox[2], bbox[3]), color, -1, linestyle=lineStyle))
         if tag&(label!='background'):
-            content = f'{preffix}{"" if preffix is None else "_"}{label}{"" if suffix is None else "_"}{suffix}'
-            self.drawLabel(content,bbox)
+            self.drawLabel(label,bbox, preffix=preffix, suffix=suffix)
         return self
 
     def _rectangle(self, topleft, bottomright, color, thick, linestyle='solid'):
@@ -136,15 +135,16 @@ class DdtImage:
         dot_points = [np.array([point.astype(int) for point in dots]) for dots in dot_points[::2]]
         cv2.polylines(self.image, dot_points, False, color, self.thick)
 
-    def drawLabel(self, label, bbox):
+    def drawLabel(self, label, bbox, preffix='', suffix=''):
         color_rgb = self.getColor(label,order='BGR')
         textColor = tuple(np.ones_like(color_rgb)*255 - color_rgb)
         color_rgb = tuple(color_rgb)
         #draw tag
         tag_background = Image.new('RGB', (int(self.fontscale*100),int(self.fontscale*1.5)),color=color_rgb)
         draw = ImageDraw.Draw(tag_background)
-        draw.text((0, 0), label, font = self.font, fill = textColor,anchor='lt')
-        w, h = draw.textsize(label, font=self.font)
+        content = f'{preffix}{"_" if preffix else ""}{label}{"_" if suffix else ""}{suffix}'
+        draw.text((0, 0), content, font = self.font, fill = textColor,anchor='lt')
+        w, h = draw.textsize(content, font=self.font)
         tag_background = tag_background.crop((0,0,w,int(h*1.1)))
         text_y = max(bbox[1] - h,0) #label 위치 조정
         img = Image.fromarray(self.return_order_changed_image(self.image))
