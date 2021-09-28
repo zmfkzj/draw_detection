@@ -67,7 +67,7 @@ class DdtImage:
         label_color = {label:tuple([int(c) for c in color.split(',')][::-1]) for label,color in label_str_color}
         return label_color
 
-    def drawBbox(self,label, bbox:Sequence, lineStyle='solid', fill=True, tag=False):
+    def drawBbox(self,label, bbox:Sequence, lineStyle='solid', fill=True, tag=False, preffix:str=None, suffix:str=None):
         assert lineStyle in ['solid','dot','no'],'"lineStyle" 인수는 "solid"와 "dot","no" 중 하나여야 합니다.'
         bbox = [int(i) for i in bbox]
         color = self.getColor(label)
@@ -75,7 +75,8 @@ class DdtImage:
         if fill:
             self.fill(lambda :self._rectangle((bbox[0], bbox[1]), (bbox[2], bbox[3]), color, -1, linestyle=lineStyle))
         if tag&(label!='background'):
-            self.drawLabel(label,bbox)
+            content = f'{preffix}{"" if preffix is None else "_"}{label}{"" if suffix is None else "_"}{suffix}'
+            self.drawLabel(content,bbox)
         return self
 
     def _rectangle(self, topleft, bottomright, color, thick, linestyle='solid'):
