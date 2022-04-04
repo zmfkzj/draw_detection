@@ -27,7 +27,7 @@ class DdtImage:
         else:
             self.label_color = self.parse_labelmap(labelmap_path=labelmap)
         self.label_color['background'] = (0,0,0) if self.image.shape[2]==3 else (0,0,0,255)
-        self.fontscale = np.max(np.array(self.image.shape[:2])*0.005)
+        self.fontscale = np.max(np.array(self.image.shape[:2])*0.01)
         self.thick = int(np.max([*list(np.array(self.image.shape[:2])*0.001),1]))
         fontpath = Path(__file__).parent/'NanumGothicBold.ttf'
         self.font =ImageFont.truetype(str(fontpath), int(self.fontscale))
@@ -50,9 +50,9 @@ class DdtImage:
         color = self.label_color[label]
         channel = self.image.shape[2]
         if order=='BGR':
-            return color if channel==3 else color+(255,)
+            return color if channel==3 or len(color)==4 else color+(255,)
         elif order=='RGB':
-            return color[::-1] if channel==3 else color[::-1]+(255,)
+            return color[::-1] if channel==3 or len(color)==4 else color[::-1]+(255,)
         else:
             raise AssertionError(f'order 인수를 바르게 입력하세요. 현재 입력={order}')
     
@@ -182,13 +182,14 @@ class DdtImage:
                 self.fill(lambda :cv2.fillPoly(self.image,pts=[np.array(polygons[:-1])],color=color))
             else:
                 color_mask = np.array(color).reshape([1,1,len(color)])*np.ones_like(self.image,dtype=np.uint8)
-                self.fill(lambda : np.where(np.transpose(np.tile(mask,(3,1,1)),(1,2,0)),color_mask,self.image))
+                c = color_mask.shape[2]
+                self.fill(lambda : setattr(self, 'image',np.where(np.transpose(np.tile(mask,(c,1,1)),(1,2,0)),color_mask,self.image)))
         return self
 
     def fill(self, func):
         nofill_img = np.copy(self.image)
         func()
-        self.image = cv2.addWeighted(self.image, 0.3, nofill_img,0.7,0)
+        self.image = cv2.addWeighted(self.image, 0.3, nofill_img,0.7,0, dtype=cv2.CV_32S)
 
     def save(self, path:PathLike):
         path = Path(str(path)).absolute()
