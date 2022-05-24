@@ -9,11 +9,10 @@ install_requires = \
     [
         'pillow',
         'numpy',
-        'chardet'
+        'chardet',
+        'opencv-python'
     ]
 
-root = Path(__file__).parent
-check_call("conda install -y --file".split()+[str(root/"requirements.txt")])
 setuptools.setup(
     name="ddt",
     version="0.0.18",
